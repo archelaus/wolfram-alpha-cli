@@ -1,0 +1,34 @@
+#!/bin/bash
+
+VIEWER="kitty +kitten icat --align left"
+# VIEWER="display"
+
+BG="transparent"
+FG="white"
+
+[[ $WA_APPID ]] || {
+  printf 'ERROR: $WA_APPID is not set.\nGet one at https://products.wolframalpha.com/api\n'
+  exit 1
+}
+
+if [[ $1 = "-p" ]]; then
+  shift
+  curl -s -w '\n' "https://api.wolframalpha.com/v1/simple?appid=${WA_APPID}&units=metric&foreground=${FG}&background=${BG}" \
+    --data-urlencode "i=$*" | $VIEWER
+  exit 0
+fi
+
+RESPONSE=$(
+  curl -s "https://api.wolframalpha.com/v1/result?appid=${WA_APPID}&units=metric&" \
+    --data-urlencode "i=$*"
+)
+
+if [[ "No short answer available" = "$RESPONSE" ]]; then
+  printf "No short answer available, downloading full answer...\n"
+  curl -s -w '\n' "https://api.wolframalpha.com/v1/simple?appid=${WA_APPID}&units=metric&foreground=${FG}&background=${BG}" \
+    --data-urlencode "i=$*" | $VIEWER
+else
+  printf '%s\n' "$RESPONSE"
+fi
+
+exit 0
